@@ -42,5 +42,5 @@ src/
 - [x] Dashboard with live node metrics (polled).
 - [x] Container list with start / stop / delete / create.
 - [x] Live log streaming over WebSocket.
-- [ ] Served directly by `hestia-server` in production (currently dev-proxied).
+- [x] Served directly by `hestia-server` in production (`HESTIA_UI_DIR=dist`).
 - [ ] Per-node detail view; Nomad jobs view.

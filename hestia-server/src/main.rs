@@ -3,10 +3,12 @@ mod api;
 mod error;
 
 use std::net::SocketAddr;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
 use clap::Parser;
+use tower_http::services::{ServeDir, ServeFile};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use crate::agents::Registry;
@@ -24,6 +26,11 @@ struct Args {
     /// e.g. `mini1=http://10.0.0.11:4400,mini2=http://10.0.0.12:4400`
     #[arg(long, env = "HESTIA_AGENTS", value_delimiter = ',')]
     agents: Vec<String>,
+
+    /// Directory of built UI assets to serve (e.g. `hestia-ui/dist`). When
+    /// unset, the server is API-only.
+    #[arg(long, env = "HESTIA_UI_DIR")]
+    ui_dir: Option<PathBuf>,
 }
 
 /// Shared application state, cheap to clone.
@@ -63,7 +70,15 @@ async fn main() -> anyhow::Result<()> {
         http,
     };
 
-    let app = api::router(state);
+    let mut app = api::router(state);
+
+    // Optionally serve the built UI. Unknown paths fall back to index.html so
+    // the single-page app loads from any entry point.
+    if let Some(dir) = &args.ui_dir {
+        let index = dir.join("index.html");
+        app = app.fallback_service(ServeDir::new(dir).not_found_service(ServeFile::new(index)));
+        tracing::info!(dir = %dir.display(), "serving UI assets");
+    }
 
     let listener = tokio::net::TcpListener::bind(args.addr).await?;
     tracing::info!(addr = %args.addr, "hestia-server listening");

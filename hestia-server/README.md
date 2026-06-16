@@ -6,14 +6,16 @@ Nomad (planned), and serves the web UI (planned).
 ## Run
 
 ```sh
-# bind :4300, aggregate two agents
+# bind :4300, aggregate two agents, serve the built UI
 HESTIA_SERVER_ADDR=0.0.0.0:4300 \
 HESTIA_AGENTS="mini1=http://10.0.0.11:4400,mini2=http://10.0.0.12:4400" \
+HESTIA_UI_DIR=../hestia-ui/dist \
 cargo run -p hestia-server
 ```
 
 `HESTIA_AGENTS` is a comma-separated list of `name=url` (or bare `url`, whose
-host:port becomes the name).
+host:port becomes the name). `HESTIA_UI_DIR` is optional — when set, the server
+also serves that built UI bundle (otherwise it is API-only).
 
 ## Endpoints (v0.1)
 
@@ -47,6 +49,9 @@ container list). Reads use a 5 s per-request timeout; actions allow 60 s.
 - [x] Concurrent aggregation of node metrics and containers.
 - [x] Proxy container actions to the owning node
       (create / delete / start / stop / logs WebSocket bridge).
-- [ ] Nomad integration (`src/nomad.rs`): list and manage jobs.
-- [ ] Serve the `hestia-ui` bundle.
+- [x] Serve the `hestia-ui` bundle (`HESTIA_UI_DIR`).
+- [ ] SPA fallback should return 200 (currently 404) — only matters once the
+      UI uses client-side routing.
 - [ ] Dynamic agent registration (agents self-register).
+- [ ] _(optional, much later)_ Nomad integration (`src/nomad.rs`): list and
+      manage jobs alongside native containers.
